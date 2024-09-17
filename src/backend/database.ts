@@ -52,7 +52,7 @@ export const upsertDataToCollection = async ({
       },
     });
   } else {
-    await auth.elevate(items.insertDataItem)({
+    await items.insertDataItem({
       dataCollectionId,
       dataItem: {
         _id: item._id ?? undefined,
