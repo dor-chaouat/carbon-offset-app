@@ -1,11 +1,12 @@
 import { items } from '@wix/data';
 import { auth } from '@wix/essentials';
+import { Jewel } from '../types';
 
 // Exposing utility functions over Wix Data APIs for easier usage and replacement of database
 
-type DataItem = {
+export type DataItem = {
   _id?: string;
-  data: Record<string, any>;
+  data: Jewel;
 };
 
 export const getDataFromCollection = async ({
