@@ -1,6 +1,6 @@
-export type Settings = {
-  amount: number;
+export type Jewel = {
   title: string;
-  color: string;
-  iconColor: string;
+  amount: number;
+  jewel: string;
+  id: string;
 };

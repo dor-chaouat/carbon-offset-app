@@ -1,88 +1,75 @@
 import React, { useEffect, useState, type FC } from 'react';
 import { httpClient } from '@wix/essentials';
-import {
-  Box,
-  Card,
-  Cell,
-  Layout,
-  Loader,
-  Page,
-  WixDesignSystemProvider,
-} from '@wix/design-system';
-import { MainButton } from '../../components/main-button';
-import { PluginPreview } from '../../components/plugin-preview';
-import { SettingsForm } from '../../components/settings-form';
-import type { Settings } from '../../types';
+import { Button, WixDesignSystemProvider } from '@wix/design-system';
 import '@wix/design-system/styles.global.css';
+import { Jewel } from '../../types';
+import { withDashboard } from '@wix/dashboard-react';
+import { WixPatternsProvider } from '@wix/patterns/provider';
+import { JewelsCollectionPage } from '../../components/CollectionPage';
 
-const Index: FC = () => {
-  const [settings, setSettings] = useState<Settings>()
+function Index() {
+  const [jewels, setJewels] = useState<Jewel[]>();
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const res = await httpClient.fetchWithAuth(`${import.meta.env.BASE_API_URL}/settings`);
-      const data: Settings = (await res.json());
+  // useEffect(() => {
+  //   fetchJewels();
+  // }, []);
 
-      setSettings(data);
-    };
+  const fetchJewels = async () => {
+    const res = await httpClient.fetchWithAuth(
+      `${import.meta.env.BASE_API_URL}/jewels`
+    );
 
-    fetchSettings();
-  }, []);
+    const data: Jewel[] = await res.json();
+    console.log({ data });
+    setJewels(data);
+  };
 
+  const addJewel = async () => {
+    await httpClient.fetchWithAuth(`${import.meta.env.BASE_API_URL}/jewels`, {
+      method: 'POST',
+      body: JSON.stringify({
+        jewel: {
+          title: 'Random jewel',
+          amount: Math.floor(Math.random() * 100),
+          jewel: 'necklace',
+          id: Math.random().toString(36).substring(7).toString(),
+        },
+      }),
+    });
+    fetchJewels();
+  };
   return (
     <WixDesignSystemProvider features={{ newColorsBranding: true }}>
-      {!settings ? (
-        <Box
-          height='100vh'
-          align='center'
-          verticalAlign='middle'
-        >
-          <Loader />
-        </Box>
-      ) : (
-        <Page height='100vh'>
-          <Page.Header
-            title="Carbon Offset"
-            subtitle="Let your customers balance the carbon footprint of their order."
-            actionsBar={
-              <MainButton {...settings} />
-            }
-          />
-          <Page.Content>
-            <Layout>
-              <Cell span={4}>
-                <Card stretchVertically>
-                  <Card.Header
-                    title="Settings"
-                    subtitle="This appears on your checkout page."
-                  />
-                  <Card.Divider />
-                  <Card.Content>
-                    <SettingsForm
-                      settings={settings}
-                      setSettings={setSettings}
-                    />
-                  </Card.Content>
-                </Card>
-              </Cell>
-              <Cell span={8}>
-                <Card>
-                  <Card.Header
-                    title="Preview"
-                    subtitle="This is how your plugin will look like."
-                  />
-                  <Card.Divider />
-                  <Card.Content>
-                    <PluginPreview {...settings} />
-                  </Card.Content>
-                </Card>
-              </Cell>
-            </Layout>
-          </Page.Content>
-        </Page>
-      )}
-    </WixDesignSystemProvider >
+      <WixPatternsProvider>
+        <Button onClick={addJewel}>Add random jewel</Button>
+        <JewelsCollectionPage />
+      </WixPatternsProvider>
+    </WixDesignSystemProvider>
   );
-};
+}
 
-export default Index;
+export default withDashboard(Index);
+
+// export default withDashboard(() => {
+//   return (
+//     <WixDesignSystemProvider features={{ newColorsBranding: true }}>
+//       <PatternsReactRouter>
+//         <PatternsReactRoute
+//           type='other'
+//           path='/'
+//           element={<div>asdasdas</div>}
+//         />
+//         <PatternsReactRoute
+//           type='collection'
+//           path='/entities'
+//           element={<div>asdsadassaaasaaaaaa</div>}
+//         />
+//         <PatternsReactRoute
+//           type='editEntity'
+//           path='/entities/:entityId'
+//           element={<div>edit entity</div>}
+//         />
+//       </PatternsReactRouter>
+//     </WixDesignSystemProvider>
+//   );
+// });
