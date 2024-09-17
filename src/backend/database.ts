@@ -1,5 +1,5 @@
 import { items } from '@wix/data';
-import { auth } from '@wix/essentials';
+
 import { Jewel } from '../types';
 
 // Exposing utility functions over Wix Data APIs for easier usage and replacement of database
@@ -14,8 +14,8 @@ export const getDataFromCollection = async ({
 }: {
   dataCollectionId: string;
 }) => {
-  const data = await auth
-    .elevate(items.queryDataItems)({
+  const data = await items
+    .queryDataItems({
       dataCollectionId,
     })
     .find();
@@ -31,10 +31,7 @@ export const safelyGetItemFromCollection = async ({
   itemId: string;
 }) => {
   try {
-    const { data } = await auth.elevate(items.getDataItem)(itemId, {
-      dataCollectionId,
-    });
-
+    const { data } = await items.getDataItem(itemId, { dataCollectionId });
     return data;
   } catch (error) {
     // Wix data's "getDataItem" API throws exception when item with id does not exist
@@ -54,7 +51,7 @@ export const upsertDataToCollection = async ({
     collection.items.find((existingItem) => existingItem._id === item._id);
 
   if (item._id && existsInCollection) {
-    await auth.elevate(items.updateDataItem)(item._id, {
+    await items.updateDataItem(item._id, {
       dataCollectionId,
       dataItem: {
         data: {
@@ -64,7 +61,7 @@ export const upsertDataToCollection = async ({
       },
     });
   } else {
-    await auth.elevate(items.insertDataItem)({
+    await items.insertDataItem({
       dataCollectionId,
       dataItem: {
         _id: item._id ?? undefined,
