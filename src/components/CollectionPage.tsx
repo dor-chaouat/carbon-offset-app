@@ -1,5 +1,6 @@
 import React from 'react';
 import { Page } from '@wix/design-system';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   MultiBulkActionToolbar,
@@ -24,6 +25,7 @@ export type TableFilters = {
 };
 
 export const JewelsCollectionPage = () => {
+  const navigate = useNavigate();
   const state = useTableCollection<Jewel, TableFilters>({
     queryName: 'dummy-entity-table',
     fqdn: 'wix.patterns.dummyservice.v1.dummy_entity',
@@ -76,7 +78,7 @@ export const JewelsCollectionPage = () => {
                   text: 'Do Action #1',
                   prefixIcon: <InvoiceSmall />,
                   onClick: () => {
-                    console.log('Action #1');
+                    navigate('/entity');
                   },
                 },
                 {

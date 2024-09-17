@@ -3,6 +3,10 @@ import { JEWELRY_COLLECTION_ID } from '../../consts';
 import { Jewel } from '../../../types';
 
 export async function GET(req: Request) {
+  const url = new URL(req.url);
+  if (url.searchParams.get('id')) {
+    console.log('has id');
+  }
   const jewelsCollection = await getDataFromCollection({
     dataCollectionId: JEWELRY_COLLECTION_ID,
   });
@@ -24,7 +28,6 @@ export async function POST(req: Request) {
 
     return new Response('Success');
   } catch (error) {
-    console.log(error.message);
-    return new Response('asdasd', { status: 500 });
+    return new Response('Failed', { status: 500 });
   }
 }
