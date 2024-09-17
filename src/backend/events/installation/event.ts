@@ -6,7 +6,7 @@ import { JEWELRY_COLLECTION_ID } from '../../consts';
 appInstances.onAppInstanceInstalled(() => {
   auth.elevate(collections.createDataCollection)({
     _id: JEWELRY_COLLECTION_ID,
-    displayName: 'Carbon Offset Settings',
+    displayName: 'Jewelry',
     fields: [
       { key: 'title', type: collections.Type.TEXT },
       { key: 'amount', type: collections.Type.NUMBER },
