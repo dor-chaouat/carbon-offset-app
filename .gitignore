@@ -11,3 +11,6 @@ yarn-error.log*
 # Misc
 .DS_Store
 out
+
+.yarn
+.idea

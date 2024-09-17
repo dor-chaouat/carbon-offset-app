@@ -1,5 +1,5 @@
 {
   "$schema": "https://dev.wix.com/wix-cli/schemas/wix-config.json",
-  "appId": "a21a2d2f-e642-4195-adcc-ccdd389ba3c0",
-  "projectId": "standalone-carbon-offset"
+  "appId": "9f95a5e9-9723-4183-8025-3e15bcad4960",
+  "projectId": "custom-order-action-template"
 }
