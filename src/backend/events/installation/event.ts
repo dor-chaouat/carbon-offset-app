@@ -2,6 +2,7 @@ import { auth } from '@wix/essentials';
 import { collections } from '@wix/data';
 import { appInstances } from '@wix/app-management';
 import { JEWELRY_COLLECTION_ID } from '../../consts';
+import { Jewel } from '../../../types';
 
 appInstances.onAppInstanceInstalled(() => {
   auth.elevate(collections.createDataCollection)({
@@ -20,4 +21,5 @@ appInstances.onAppInstanceInstalled(() => {
       update: collections.Role.ANYONE,
     },
   });
+  //TODO: Add initial data to the collection
 });
