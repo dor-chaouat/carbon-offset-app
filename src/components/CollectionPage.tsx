@@ -1,9 +1,5 @@
-import React from 'react';
-import { Page } from '@wix/design-system';
+import React from "react";
 import {
-  Table,
-  MultiBulkActionToolbar,
-  useTableCollection,
   MoreActions,
   CursorQuery,
   dateRangeFilter,
@@ -11,168 +7,154 @@ import {
   DateRangeFilter,
   RangeItem,
   Filter,
-  SecondaryActions,
   PrimaryActions,
-} from '@wix/patterns';
-import { CollectionPage } from '@wix/patterns/page';
+  useTableGridSwitchCollection,
+  TableGridSwitch,
+  CustomColumns,
+  useOptimisticActions,
+} from "@wix/patterns";
+import { CollectionPage } from "@wix/patterns/page";
 
-import { Edit, InvoiceSmall, Visible } from '@wix/wix-ui-icons-common';
-import { Jewel } from '../types';
-import { httpClient } from '@wix/essentials';
+import { Add, Edit, InvoiceSmall, Visible } from "@wix/wix-ui-icons-common";
+import { Jewel } from "../types";
+import { httpClient } from "@wix/essentials";
+import { items } from "@wix/data";
+import { addJewel } from "../services/jewels";
+
 export type TableFilters = {
   updatedDate: Filter<RangeItem<Date>>;
 };
 
 export const JewelsCollectionPage = () => {
-  const state = useTableCollection<Jewel, TableFilters>({
-    queryName: 'dummy-entity-table',
-    fqdn: 'wix.patterns.dummyservice.v1.dummy_entity',
-    filters: {
-      updatedDate: dateRangeFilter(),
-    },
-    fetchData: async (query: CursorQuery<Partial<TableFilters>>) => {
+  const state = useTableGridSwitchCollection<Jewel, TableFilters>({
+    queryName: "dummy-entity-table",
+    fqdn: "wix.patterns.dummyservice.v1.dummy_entity",
+    itemKey: (item) => item.id,
+    itemName: (item) => item.title,
+    fetchData: async (_query: CursorQuery<TableFilters>) => {
       const res = await httpClient.fetchWithAuth(
         `${import.meta.env.BASE_API_URL}/jewels`
       );
-      const data: Jewel[] = await res.json();
+      const data: { data: Jewel }[] = await res.json();
       return {
         items: data.map((item) => item.data) || [],
-        cursor: '',
+        cursor: "",
       };
     },
-
     fetchErrorMessage: ({ err }) => `Error: ${err}`,
-    itemKey: (item) => item.id!,
-    itemName: (item) => item.title!,
+    filters: {
+      updatedDate: dateRangeFilter(),
+    },
   });
-  const addJewel = async () => {
-    await httpClient.fetchWithAuth(`${import.meta.env.BASE_API_URL}/jewels`, {
-      method: 'POST',
-      body: JSON.stringify({
-        jewel: {
-          title: 'Random jewel' + Math.random(),
-          amount: Math.floor(Math.random() * 100),
-          jewel: 'necklace',
-          id: Math.random().toString(36).substring(7).toString(),
-        },
-      }),
+
+  const optimisticActions = useOptimisticActions(state.collection);
+
+  const createItem = async () => {
+    const item = {
+      title: "Random jewel" + Math.random(),
+      amount: Math.floor(Math.random() * 100),
+      jewel: "necklace",
+      id: Math.random().toString(36).substring(7).toString(),
+    };
+
+    optimisticActions.createOne(item, {
+      submit: async ([itemToSubmit]) => {
+        const res = await addJewel(itemToSubmit);
+        const { data }: { data: Jewel } = await res.json();
+        return [data];
+      },
+      successToast: "Jewel created successfully",
     });
-    state.collection.refreshCurrentPage();
   };
+
   return (
-    <CollectionPage dataHook='dummy-collection-page'>
+    <CollectionPage dataHook="dummy-collection-page">
       <CollectionPage.Header
-        title={{ text: 'Dummy Collection', hideTotal: true }}
+        title={{ text: "Dummy Collection", hideTotal: true }}
         subtitle={{
-          text: 'This is a dummy collection subtitle',
-          learnMore: { url: 'https://www.wix.com' },
+          text: "This is a dummy collection subtitle",
+          learnMore: { url: "https://www.wix.com" },
         }}
         moreActions={
           <MoreActions
             items={[
               [
                 {
-                  biName: 'action-1',
-                  text: 'Do Action #1',
+                  biName: "action-1",
+                  text: "Do Action #1",
                   prefixIcon: <InvoiceSmall />,
                   onClick: () => {
-                    console.log('Action #1');
+                    console.log("Action #1");
                   },
                 },
                 {
-                  biName: 'action-2',
-                  text: 'Another Action #2',
+                  biName: "action-2",
+                  text: "Another Action #2",
                   prefixIcon: <Visible />,
                   onClick: () => {
-                    console.log('Open Subscriptions');
+                    console.log("Open Subscriptions");
                   },
                 },
               ],
             ]}
-            exploreAppsModalProps={{
-              title: 'Explore related apps',
-              subtitle: 'Find useful apps to help you manage your business',
-              tag: '7d4d7891-2995-4bb9-8d2b-457aa7dca3f2',
-            }}
-            containerId='6dcbba57-c740-477c-a747-30094cf54c'
-          />
-        }
-        secondaryActions={
-          <SecondaryActions
-            dataHook='primary-action-1'
-            label='Primary 1'
-            prefixIcon={<Visible />}
-            subItems={[{ label: 'option 1', biName: 'option-1' }]}
           />
         }
         primaryAction={
           <PrimaryActions
-            label='Add'
-            subItems={[
-              {
-                label: 'Add random jewel',
-                onClick: addJewel,
-                biName: 'add-random-jewel',
-              },
-            ]}
+            label="Add"
+            prefixIcon={<Add />}
+            onClick={createItem}
           />
         }
       />
-      <Page.Content>
-        <Table
+      <CollectionPage.Content>
+        <TableGridSwitch
           useNewInfiniteScrollLoader
           horizontalScroll={true}
-          showSelection
-          dataHook='dummy-entity-collection'
+          dataHook="dummy-entity-collection"
           state={state}
+          customColumns={<CustomColumns />}
           filters={
             <CollectionToolbarFilters>
               <DateRangeFilter
-                accordionItemProps={{ label: 'Date' }}
+                accordionItemProps={{ label: "Date" }}
                 filter={state.collection.filters.updatedDate}
               />
             </CollectionToolbarFilters>
           }
-          bulkActionToolbar={() => (
-            <MultiBulkActionToolbar
-              containerId='f150c9a9-ea35-4906-977f-49eeb27b080e'
-              containerProps={{
-                stam: 'mashu',
-              }}
-            />
-          )}
-          actionCell={(item) => {
+          actionCell={(_item) => {
             return {
-              containerId: 'f150c9a9-ea35-4906-977f-49eeb27b080e',
               primaryAction: {
-                text: 'Edit',
-                onClick: () => {},
+                text: "Edit",
+                onClick: () => {
+                  console.log("Edit");
+                },
                 icon: <Edit />,
               },
             };
           }}
           columns={[
             {
-              id: 'title',
+              id: "title",
               hideable: false,
-              title: 'Title',
+              title: "Title",
               render: (item) => item.title,
             },
             {
-              id: 'amount',
+              id: "amount",
               hideable: false,
-              title: 'Amount',
+              title: "Amount",
               render: (item) => item.amount,
             },
             {
-              id: 'jewel',
+              id: "jewel",
               hideable: false,
-              title: 'Jewel type',
+              title: "Jewel type",
               render: (item) => item.jewel,
             },
           ]}
         />
-      </Page.Content>
+      </CollectionPage.Content>
     </CollectionPage>
   );
 };
