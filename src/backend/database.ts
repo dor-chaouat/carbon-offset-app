@@ -9,24 +9,30 @@ type DataItem = {
 };
 
 export const getDataFromCollection = async ({
-  dataCollectionId
-}: { dataCollectionId: string }) => {
-  const data = await auth.elevate(items.queryDataItems)({
-    dataCollectionId,
-  }).find();
+  dataCollectionId,
+}: {
+  dataCollectionId: string;
+}) => {
+  const data = await auth
+    .elevate(items.queryDataItems)({
+      dataCollectionId,
+    })
+    .find();
 
   return data;
 };
 
 export const safelyGetItemFromCollection = async ({
   dataCollectionId,
-  itemId
-}: { dataCollectionId: string; itemId: string }) => {
+  itemId,
+}: {
+  dataCollectionId: string;
+  itemId: string;
+}) => {
   try {
-    const { data } = await auth.elevate(items.getDataItem)(
-      itemId,
-      { dataCollectionId },
-    );
+    const { data } = await auth.elevate(items.getDataItem)(itemId, {
+      dataCollectionId,
+    });
 
     return data;
   } catch (error) {
@@ -36,10 +42,15 @@ export const safelyGetItemFromCollection = async ({
 
 export const upsertDataToCollection = async ({
   dataCollectionId,
-  item
-}: { dataCollectionId: string; item: DataItem }) => {
+  item,
+}: {
+  dataCollectionId: string;
+  item: DataItem;
+}) => {
   const collection = await getDataFromCollection({ dataCollectionId });
-  const existsInCollection = item._id && collection.items.find(existingItem => existingItem._id === item._id);
+  const existsInCollection =
+    item._id &&
+    collection.items.find((existingItem) => existingItem._id === item._id);
 
   if (item._id && existsInCollection) {
     await auth.elevate(items.updateDataItem)(item._id, {
@@ -47,7 +58,7 @@ export const upsertDataToCollection = async ({
       dataItem: {
         data: {
           _id: item._id,
-          ...item.data
+          ...item.data,
         },
       },
     });
@@ -58,9 +69,9 @@ export const upsertDataToCollection = async ({
         _id: item._id ?? undefined,
         data: {
           _id: item._id ?? undefined,
-          ...item.data
+          ...item.data,
         },
       },
     });
-  };
+  }
 };
