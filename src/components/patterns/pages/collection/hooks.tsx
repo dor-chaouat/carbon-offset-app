@@ -1,101 +1,82 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Page } from '@wix/design-system';
-import { httpClient } from '@wix/essentials';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { httpClient } from "@wix/essentials";
 import {
   CollectionToolbarFilters,
+  CursorQuery,
+  CustomColumns,
+  dateRangeFilter,
   DateRangeFilter,
   Filter,
   MoreActions,
-  MultiBulkActionToolbar,
   PrimaryActions,
   RangeItem,
-  SecondaryActions,
   Table,
   TableColumn,
   TableState,
-} from '@wix/patterns';
-import { CollectionPage } from '@wix/patterns/page';
-import { Edit, InvoiceSmall, Visible } from '@wix/wix-ui-icons-common';
-import { Jewel } from '../../../../types';
+  useOptimisticActions,
+  useTableCollection,
+} from "@wix/patterns";
+import { CollectionPage } from "@wix/patterns/page";
+import { Add, Edit, InvoiceSmall, Visible } from "@wix/wix-ui-icons-common";
+import { type Jewel } from "../../../../types";
+import { type DataItem } from "../../../../backend/database";
 
 export type TableFilters = {
   updatedDate: Filter<RangeItem<Date>>;
 };
-export const useJewelsPageContent = (
-  state: TableState<Jewel, TableFilters>
-) => {
-  return (
-    <Page.Content>
-      <Table
-        useNewInfiniteScrollLoader
-        horizontalScroll={true}
-        showSelection
-        dataHook='dummy-entity-collection'
-        state={state}
-        filters={
-          <CollectionToolbarFilters>
-            <DateRangeFilter
-              accordionItemProps={{ label: 'Date' }}
-              filter={state.collection.filters.updatedDate}
-            />
-          </CollectionToolbarFilters>
-        }
-        bulkActionToolbar={() => (
-          <MultiBulkActionToolbar
-            containerId='f150c9a9-ea35-4906-977f-49eeb27b080e'
-            containerProps={{
-              stam: 'mashu',
-            }}
-          />
-        )}
-        actionCell={(item) => {
-          return {
-            containerId: 'f150c9a9-ea35-4906-977f-49eeb27b080e',
-            primaryAction: {
-              text: 'Edit',
-              onClick: () => {},
-              icon: <Edit />,
-            },
-          };
-        }}
-        columns={getJewelsTableColumns()}
-      />
-    </Page.Content>
-  );
+
+export const useJewelsPageState = () => {
+  const fetchDataHandler = async (
+    _query: CursorQuery<Partial<TableFilters>>
+  ) => {
+    //TODO: handle query and filters
+    const res = await httpClient.fetchWithAuth(
+      `${import.meta.env.BASE_API_URL}/jewels`
+    );
+    const data: DataItem[] = await res.json();
+    return {
+      items: data.map((item) => item.data) || [],
+      cursor: "", //TODO: handle cursor
+    };
+  };
+
+  const state = useTableCollection<Jewel, TableFilters>({
+    queryName: "dummy-entity-table",
+    fqdn: "wix.patterns.dummyservice.v1.dummy_entity",
+    itemKey: (item) => item.id,
+    itemName: (item) => item.title,
+    fetchData: fetchDataHandler,
+    fetchErrorMessage: ({ err }) => `Error: ${err}`,
+    filters: {
+      updatedDate: dateRangeFilter(),
+    },
+  });
+
+  return {
+    state,
+  };
 };
 
 export const useJewelsPageHeader = () => {
   const moreActionsItems = useMoreActionsItems();
   return (
     <CollectionPage.Header
-      title={{ text: 'Dummy Collection', hideTotal: true }}
+      title={{ text: "Dummy Collection", hideTotal: true }}
       subtitle={{
-        text: 'This is a dummy collection subtitle',
-        learnMore: { url: 'https://www.wix.com' },
+        text: "This is a dummy collection subtitle",
+        learnMore: { url: "https://www.wix.com" },
       }}
-      moreActions={
-        <MoreActions
-          items={moreActionsItems}
-          containerId='6dcbba57-c740-477c-a747-30094cf54c' // FIXME: What is container id?
-        />
-      }
-      secondaryActions={
-        <SecondaryActions
-          dataHook='primary-action-1'
-          label='Primary 1'
-          prefixIcon={<Visible />}
-          subItems={[{ label: 'option 1', biName: 'option-1' }]}
-        />
-      }
+      moreActions={<MoreActions items={moreActionsItems} />}
       primaryAction={
         <PrimaryActions
-          label='Add'
+          label="Add"
+          prefixIcon={<Add />}
           subItems={[
             {
-              label: 'Add random jewel',
+              label: "Add random jewel",
               onClick: addJewel,
-              biName: 'add-random-jewel',
+              biName: "add-random-jewel",
             },
           ]}
         />
@@ -104,24 +85,80 @@ export const useJewelsPageHeader = () => {
   );
 };
 
+export const useJewelsPageContent = (
+  state: TableState<Jewel, TableFilters>
+) => {
+  const optimisticActions = useOptimisticActions(state.collection);
+
+  const createItem = async () => {
+    const item = {
+      title: "Random jewel" + Math.random(),
+      amount: Math.floor(Math.random() * 100),
+      jewel: "necklace",
+      id: Math.random().toString(36).substring(7).toString(),
+    };
+
+    optimisticActions.createOne(item, {
+      submit: async ([itemToSubmit]) => {
+        const res = await addJewel(itemToSubmit);
+        const { data }: { data: Jewel } = await res.json();
+        return [data];
+      },
+      successToast: "Jewel created successfully",
+    });
+  };
+
+  return (
+    <CollectionPage.Content>
+      <Table
+        useNewInfiniteScrollLoader
+        horizontalScroll={true}
+        dataHook="dummy-entity-collection"
+        state={state}
+        customColumns={<CustomColumns />}
+        filters={
+          <CollectionToolbarFilters>
+            <DateRangeFilter
+              accordionItemProps={{ label: "Date" }}
+              filter={state.collection.filters.updatedDate}
+            />
+          </CollectionToolbarFilters>
+        }
+        actionCell={(_item) => {
+          return {
+            primaryAction: {
+              text: "Edit",
+              onClick: () => {
+                console.log("Edit");
+              },
+              icon: <Edit />,
+            },
+          };
+        }}
+        columns={getJewelsTableColumns()}
+      />
+    </CollectionPage.Content>
+  );
+};
+
 const useMoreActionsItems = () => {
   const navigate = useNavigate();
   return [
     [
       {
-        biName: 'action-1',
-        text: 'Do Action #1',
+        biName: "action-1",
+        text: "Do Action #1",
         prefixIcon: <InvoiceSmall />,
         onClick: () => {
-          navigate('/entity');
+          navigate("/entity");
         },
       },
       {
-        biName: 'action-2',
-        text: 'Another Action #2',
+        biName: "action-2",
+        text: "Another Action #2",
         prefixIcon: <Visible />,
         onClick: () => {
-          console.log('Open Subscriptions');
+          console.log("Open Subscriptions");
         },
       },
     ],
@@ -131,37 +168,30 @@ const useMoreActionsItems = () => {
 const getJewelsTableColumns = () => {
   return [
     {
-      id: 'title',
+      id: "title",
       hideable: false,
-      title: 'Title',
+      title: "Title",
       render: (item: Jewel) => item.title,
     },
     {
-      id: 'amount',
+      id: "amount",
       hideable: false,
-      title: 'Amount',
+      title: "Amount",
       render: (item: Jewel) => item.amount,
     },
     {
-      id: 'jewel',
+      id: "jewel",
       hideable: false,
-      title: 'Jewel type',
+      title: "Jewel type",
       render: (item: Jewel) => item.jewel,
     },
   ] as TableColumn<Jewel>[];
 };
 
-const addJewel = async (state: TableState<Jewel, TableFilters>) => {
+const addJewel = async (item: Jewel) =>
   await httpClient.fetchWithAuth(`${import.meta.env.BASE_API_URL}/jewels`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({
-      jewel: {
-        title: 'Random jewel' + Math.random(),
-        amount: Math.floor(Math.random() * 100),
-        jewel: 'necklace',
-        id: Math.random().toString(36).substring(7).toString(),
-      },
+      jewel: item,
     }),
   });
-  state.collection.refreshCurrentPage(); // FIXME: until patterns router will work, we'll need to reload the table data
-};
