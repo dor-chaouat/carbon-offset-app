@@ -14,9 +14,22 @@ export enum QuestionType {
 }
 
 export interface SubmissionCoupon {
-  type: CouponType
+  type: CouponType;
   // To be used for percent off and money off
-  amount: number
+  amount: number;
+  coupon: SubmissionCoupon;
+}
+
+export interface SubmissionCoupon {
+  type: CouponType;
+  // To be used for percent off and money off
+  amount: number;
+}
+
+export enum tabs {
+  questions = 'Questions',
+  responses = 'Responses',
+  analytics = 'Analytics',
 }
 
 export enum CouponType {
@@ -30,4 +43,4 @@ export type Submissions = {
   answer1: string | undefined;
   answer2: string | undefined;
   answer3: string | undefined;
-}
+};
